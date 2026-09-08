@@ -298,7 +298,12 @@
       <tbody id="itemRows">
         <tr class="item-row">
           <td class="center row-no">1</td>
-          <td><input class="desc" value="PCB SCRAP"></td>
+          <td><textarea 
+    class="desc"
+    rows="1"
+    style="width:100%; min-height:8mm; resize:none; overflow:hidden; border:1px solid transparent; background:transparent; font:inherit; padding:1px 2px; box-sizing:border-box; white-space:pre-wrap; overflow-wrap:anywhere;"
+    oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px';"
+  >Product 2 Details</textarea></td>
           <td><input class="hs" value="—"></td>
           <td><input class="qty" type="number" min="0" step="any" value="318"></td>
           <td><input class="unit-price" type="number" min="0" step="0.01" value="114.29"></td>
