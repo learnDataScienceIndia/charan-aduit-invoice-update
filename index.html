@@ -71,6 +71,33 @@
     border-color: #777;
     background: #fff;
   }
+  textarea {
+    width: 100%;
+    border: 1px solid transparent;
+    background: transparent;
+    font: inherit;
+    padding: 1px 2px;
+    color: inherit;
+    box-sizing: border-box;
+  }
+  textarea:focus {
+    outline: 1px solid #777;
+    border-color: #777;
+    background: #fff;
+  }
+  .grand-edit {
+    width: 100%;
+    text-align: right;
+    font-weight: 700;
+    border: 1px solid transparent;
+    background: transparent;
+  }
+  .grand-total .grand-edit:focus {
+    outline: 1px solid #777;
+    border-color: #777;
+    background: #fff;
+  }
+  .grand-total .center .grand-edit { text-align: center; }
   .items input[type="number"] { text-align: right; }
   .summary input[type="number"] { text-align: right; }
   .summary .summary-rate { text-align: center; }
@@ -365,14 +392,14 @@
           <td></td>
           <td><strong>Grand Total</strong></td>
           <td></td>
-          <td class="center" id="grandQty"><strong>0</strong></td>
+          <td class="center"><input id="grandQty" class="grand-edit" type="number" min="0" step="any" value="0"></td>
           <td></td>
-          <td class="right" id="grandTaxable"><strong>0.00</strong></td>
+          <td class="right"><input id="grandTaxable" class="grand-edit" type="number" min="0" step="0.01" value="0.00"></td>
           <td></td>
-          <td class="right" id="grandVatUsd"><strong>0.00</strong></td>
-          <td class="right" id="grandTotalUsd"><strong>0.00</strong></td>
-          <td class="right" id="grandTotalAed"><strong>0.00</strong></td>
-          <td class="right" id="grandVatAed"><strong>0.00</strong></td>
+          <td class="right"><input id="grandVatUsd" class="grand-edit" type="number" min="0" step="0.01" value="0.00"></td>
+          <td class="right"><input id="grandTotalUsd" class="grand-edit" type="number" min="0" step="0.01" value="0.00"></td>
+          <td class="right"><input id="grandTotalAed" class="grand-edit" type="number" min="0" step="0.01" value="0.00"></td>
+          <td class="right"><input id="grandVatAed" class="grand-edit" type="number" min="0" step="0.01" value="0.00"></td>
           <td></td>
         </tr>
       </tfoot>
@@ -515,6 +542,12 @@ Equivalent UAE Dirham <input class="words-input" type="text" placeholder="Enter 
     return el ? (Number(el.value) || 0) : 0;
   }
 
+  function setGrandValue(id, number, integerOnly) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.value = integerOnly && Number.isInteger(number) ? String(number) : Number(number || 0).toFixed(2);
+  }
+
   function calculateInvoice(recalculateDerived) {
     let qty = 0, taxable = 0, vatUsd = 0, totalUsd = 0, totalAed = 0, vatAed = 0;
     const rate = conversionRate();
@@ -549,12 +582,12 @@ Equivalent UAE Dirham <input class="words-input" type="text" placeholder="Enter 
       qty += q;
     });
 
-    document.getElementById("grandQty").textContent = Number.isInteger(qty) ? qty : qty.toFixed(2);
-    document.getElementById("grandTaxable").textContent = money(taxable);
-    document.getElementById("grandVatUsd").textContent = money(vatUsd);
-    document.getElementById("grandTotalUsd").textContent = money(totalUsd);
-    document.getElementById("grandTotalAed").textContent = money(totalAed);
-    document.getElementById("grandVatAed").textContent = money(vatAed);
+    setGrandValue("grandQty", qty, true);
+    setGrandValue("grandTaxable", taxable);
+    setGrandValue("grandVatUsd", vatUsd);
+    setGrandValue("grandTotalUsd", totalUsd);
+    setGrandValue("grandTotalAed", totalAed);
+    setGrandValue("grandVatAed", vatAed);
 
     calculateSummary();
   }
@@ -707,7 +740,8 @@ Equivalent UAE Dirham <input class="words-input" type="text" placeholder="Enter 
   };
 
   document.addEventListener("DOMContentLoaded", function () {
-    document.querySelectorAll("#itemRows .item-row, #summaryRows .summary-row").forEach(bindInputs);\n    renumberRows();
+    document.querySelectorAll("#itemRows .item-row, #summaryRows .summary-row").forEach(bindInputs);
+    renumberRows();
     calculateInvoice(true);
   });
 })();
