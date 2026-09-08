@@ -577,7 +577,9 @@ Equivalent UAE Dirham <input class="words-input" type="text" placeholder="Enter 
     row.className = "item-row";
     row.innerHTML =
       '<td class="center row-no"></td>' +
-      '<td><input class="desc" value="New Item"></td>' +
+      ''<td><textarea class="desc" rows="1" ' +
+'style="width:100%; min-height:8mm; resize:none; overflow:hidden; border:1px solid transparent; background:transparent; font:inherit; padding:1px 2px; box-sizing:border-box; white-space:pre-wrap; overflow-wrap:anywhere;" ' +
+'oninput="this.style.height=\'auto\'; this.style.height=this.scrollHeight+\'px\';">New Item</textarea></td>' +' +
       '<td><input class="hs" value="—"></td>' +
       '<td><input class="qty" type="number" min="0" step="any" value="0"></td>' +
       '<td><input class="unit-price" type="number" min="0" step="0.01" value="0"></td>' +
