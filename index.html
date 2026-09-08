@@ -76,6 +76,30 @@
   .summary .summary-rate { text-align: center; }
   .summary .input-number { min-width: 65px; }
   .items .qty, .items .vat-rate { text-align: center; }
+  textarea {
+    width: 100%;
+    border: 1px solid transparent;
+    background: transparent;
+    font: inherit;
+    padding: 1px 2px;
+    color: inherit;
+    box-sizing: border-box;
+  }
+  textarea:focus {
+    outline: 1px solid #777;
+    border-color: #777;
+    background: #fff;
+  }
+  .items textarea.desc,
+  .summary textarea.summary-name {
+    display: block;
+    width: 100%;
+    min-height: 8mm;
+    resize: none;
+    overflow: hidden;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
   .action-col { width: 62px; }
   .remove-row, .add-row {
     border: 1px solid #555;
@@ -95,7 +119,8 @@
   .table-wrap { margin-bottom: 6px; }
   @media print {
     .action-col, .remove-row, .add-row { display: none !important; }
-    input { border: 0 !important; }
+    input, textarea { border: 0 !important; }
+    textarea { background: transparent !important; }
   }
 
   @media print {
@@ -557,28 +582,56 @@ Equivalent UAE Dirham <input class="words-input" type="text" placeholder="Enter 
     document.getElementById("summaryTotalVatAed").textContent = money(vatAed);
   }
 
+  function autoGrowTextarea(textarea) {
+    textarea.style.height = "auto";
+    textarea.style.height = Math.max(textarea.scrollHeight, 30) + "px";
+  }
+
   function bindInputs(root) {
-    root.querySelectorAll("input").forEach(function (input) {
-      input.addEventListener("input", function () {
-        const source = input.matches(".qty, .unit-price, .vat-rate");
-        calculateInvoice(source);
-      });
-      input.addEventListener("change", function () {
-        const source = input.matches(".qty, .unit-price, .vat-rate");
-        calculateInvoice(source);
-      });
+    root.querySelectorAll("input, textarea").forEach(function (field) {
+      if (field.dataset.bound === "1") return;
+      field.dataset.bound = "1";
+
+      if (field.matches("textarea")) {
+        autoGrowTextarea(field);
+        field.addEventListener("input", function () {
+          autoGrowTextarea(field);
+          calculateInvoice(false);
+        });
+        field.addEventListener("change", function () {
+          autoGrowTextarea(field);
+          calculateInvoice(false);
+        });
+      } else {
+        field.addEventListener("input", function () {
+          const source = field.matches(".qty, .unit-price, .vat-rate");
+          calculateInvoice(source);
+        });
+        field.addEventListener("change", function () {
+          const source = field.matches(".qty, .unit-price, .vat-rate");
+          calculateInvoice(source);
+        });
+      }
+    });
+  }
+
+  function renumberRows() {
+    document.querySelectorAll("#itemRows .item-row").forEach(function (row, index) {
+      const numberCell = row.querySelector(".row-no");
+      if (numberCell) numberCell.textContent = index + 1;
     });
   }
 
   window.addItemRow = function () {
     const tbody = document.getElementById("itemRows");
+    if (!tbody) return;
+
     const row = document.createElement("tr");
     row.className = "item-row";
     row.innerHTML =
       '<td class="center row-no"></td>' +
-      ''<td><textarea class="desc" rows="1" ' +
-'style="width:100%; min-height:8mm; resize:none; overflow:hidden; border:1px solid transparent; background:transparent; font:inherit; padding:1px 2px; box-sizing:border-box; white-space:pre-wrap; overflow-wrap:anywhere;" ' +
-'oninput="this.style.height=\'auto\'; this.style.height=this.scrollHeight+\'px\';">New Item</textarea></td>' +' +
+      '<td><textarea class="desc auto-grow" rows="1" ' +
+        'style="width:100%; min-height:8mm; resize:none; overflow:hidden; border:1px solid transparent; background:transparent; font:inherit; padding:1px 2px; box-sizing:border-box; white-space:pre-wrap; overflow-wrap:anywhere;">New Item</textarea></td>' +
       '<td><input class="hs" value="—"></td>' +
       '<td><input class="qty" type="number" min="0" step="any" value="0"></td>' +
       '<td><input class="unit-price" type="number" min="0" step="0.01" value="0"></td>' +
@@ -589,51 +642,72 @@ Equivalent UAE Dirham <input class="words-input" type="text" placeholder="Enter 
       '<td><input class="total-aed input-number" type="number" min="0" step="0.01" value="0"></td>' +
       '<td><input class="vat-aed input-number" type="number" min="0" step="0.01" value="0"></td>' +
       '<td class="center action-col"><button type="button" class="remove-row" onclick="removeItemRow(this)">Remove</button></td>';
+
     tbody.appendChild(row);
     bindInputs(row);
+    renumberRows();
     calculateInvoice(true);
   };
 
   window.removeItemRow = function (button) {
-    const rows = document.querySelectorAll("#itemRows .item-row");
+    if (!button) return;
+
+    const row = button.closest(".item-row");
+    const tbody = document.getElementById("itemRows");
+    if (!row || !tbody) return;
+
+    const rows = tbody.querySelectorAll(".item-row");
     if (rows.length <= 1) {
       alert("At least one item row is required.");
       return;
     }
-    button.closest(".item-row").remove();
+
+    row.remove();
+    renumberRows();
     calculateInvoice();
   };
 
   window.addSummaryRow = function () {
     const tbody = document.getElementById("summaryRows");
+    if (!tbody) return;
+
     const rate = conversionRate() || 3.4977;
     const row = document.createElement("tr");
     row.className = "summary-row";
     row.innerHTML =
-      '<td><input class="summary-name" value="New Summary"></td>' +
+      '<td><textarea class="summary-name auto-grow" rows="1" ' +
+        'style="width:100%; min-height:8mm; resize:none; overflow:hidden; border:1px solid transparent; background:transparent; font:inherit; padding:1px 2px; box-sizing:border-box; white-space:pre-wrap; overflow-wrap:anywhere;">New Summary</textarea></td>' +
       '<td><input class="summary-rate" type="number" min="0" step="0.01" value="5"></td>' +
       '<td><input class="summary-usd input-number" type="number" min="0" step="0.01" value="0"></td>' +
       '<td><input class="conversion-rate input-number" type="number" min="0" step="0.0001" value="' + rate.toFixed(4) + '"></td>' +
       '<td><input class="summary-aed input-number" type="number" min="0" step="0.01" value="0"></td>' +
       '<td><input class="summary-vat-aed input-number" type="number" min="0" step="0.01" value="0"></td>' +
       '<td class="center action-col"><button type="button" class="remove-row" onclick="removeSummaryRow(this)">Remove</button></td>';
+
     tbody.appendChild(row);
     bindInputs(row);
     calculateInvoice();
   };
 
   window.removeSummaryRow = function (button) {
-    const rows = document.querySelectorAll("#summaryRows .summary-row");
+    if (!button) return;
+
+    const row = button.closest(".summary-row");
+    const tbody = document.getElementById("summaryRows");
+    if (!row || !tbody) return;
+
+    const rows = tbody.querySelectorAll(".summary-row");
     if (rows.length <= 1) {
       alert("At least one summary row is required.");
       return;
     }
-    button.closest(".summary-row").remove();
+
+    row.remove();
     calculateInvoice();
   };
 
   document.addEventListener("DOMContentLoaded", function () {
-    document.querySelectorAll("#itemRows .item-row, #summaryRows .summary-row").forEach(bindInputs);
+    document.querySelectorAll("#itemRows .item-row, #summaryRows .summary-row").forEach(bindInputs);\n    renumberRows();
     calculateInvoice(true);
   });
 })();
